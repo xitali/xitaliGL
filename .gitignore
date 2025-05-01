@@ -1,0 +1,48 @@
+# Zależności
+node_modules/
+/.pnp
+.pnp.js
+
+# Katalogi budowania/produkcji
+/dist
+/build
+release/
+/dist-electron
+/dist-app
+*.local
+xGL/
+
+# Dane lokalne i cache
+.cursor/
+.vscode/
+.idea/
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+kcd_launcher.log
+
+# Katalogi danych użytkownika
+userData/
+**/AppData/
+
+# Zmienne środowiskowe
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Pliki lock mogą się różnić w zależności od środowiska
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Pliki tymczasowe Electron
+.electron-vendors.cache.json
+
+# Pliki konfiguracyjne specyficzne dla użytkownika
+.npmrc
+.yarnrc

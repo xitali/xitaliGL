@@ -1,0 +1,26 @@
+{
+  "name": "xitali-game-launcher",
+  "productName": "xitali Game Launcher",
+  "description": "Launcher gier pozwalający na zarządzanie biblioteką gier z różnych platform",
+  "version": "1.0.2",
+  "authors": ["Emanuel 'xitali' Włoch"],
+  "owners": ["xitali"],
+  "homepage": "https://github.com/xitali/xitaliGL",
+  "exe": "xitali Game Launcher.exe",
+  "icon": "assets/icons/app-icon.ico",
+  "setupIcon": "assets/icons/app-icon.ico",
+  "noMsi": true,
+  "setupExe": "xitaliGL-Setup.exe",
+  "loadingGif": "assets/icons/installer-loading.gif",
+  "animation": {
+    "fallbackPath": null,
+    "silent": false
+  },
+  "registryKeys": {
+    "HKCU\\Software\\xitali\\Game Launcher": {
+      "InstalledPath": "[ApplicationsFolder]\\xitali Game Launcher",
+      "Version": "1.0.2"
+    }
+  },
+  "signWithParams": null
+} 

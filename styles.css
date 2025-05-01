@@ -1,0 +1,199 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+:root {
+  --bg-dark: #1a1a1a;
+  --bg-sidebar: #1a1a1a;
+  --bg-sidebar-item: #282828;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --sidebar-width: 240px;
+  --ad-banner-height: 64px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+}
+
+#root {
+  display: flex;
+  height: 100vh;
+}
+
+/* Pasek boczny */
+.sidebar {
+  width: 50px;
+  height: 100%;
+  background-color: var(--bg-sidebar);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Ikony w pasku bocznym */
+.sidebar button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
+  color: var(--text-secondary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar button:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-sidebar-item);
+}
+
+.sidebar button.active {
+  color: var(--text-primary);
+  background-color: var(--bg-sidebar-item);
+}
+
+/* Siatka gier */
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  padding: 8px;
+  padding-bottom: var(--ad-banner-height);
+}
+
+/* Karty gier */
+.game-card {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.game-card:hover {
+  transform: scale(1.03);
+}
+
+.game-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.game-title {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.game-platform {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Banner reklamowy */
+.ad-banner {
+  height: var(--ad-banner-height);
+  background-color: var(--bg-sidebar);
+  border-top: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: fixed;
+  bottom: 0;
+  left: var(--sidebar-width);
+  right: 0;
+  z-index: 10;
+}
+
+.ad-banner-content {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.banner-item {
+  flex: 1;
+  height: 100%;
+  aspect-ratio: 4.5/1;
+  overflow: hidden;
+}
+
+.banner-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.2s;
+}
+
+.banner-item img:hover {
+  opacity: 0.9;
+}
+
+/* Dostosowanie paska przewijania */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #444;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Spinner dla ekranu ładowania */
+.spinner {
+  width: 60px;
+  height: 60px;
+  position: relative;
+  margin: 0 auto;
+}
+
+/* Mniejszy spinner do użycia w mniejszych komponentach */
+.spinner-small {
+  width: 24px;
+  height: 24px;
+  position: relative;
+  margin: 0 auto;
+}
+
+.double-bounce1, .double-bounce2 {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #505050;
+  opacity: 0.6;
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation: bounce 2.0s infinite ease-in-out;
+}
+
+.double-bounce2 {
+  animation-delay: -1.0s;
+}
+
+@keyframes bounce {
+  0%, 100% { 
+    transform: scale(0.0);
+  } 50% { 
+    transform: scale(1.0);
+  }
+} 
