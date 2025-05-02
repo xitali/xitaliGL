@@ -169,6 +169,20 @@ function createWindow() {
   // Pokaż okno kiedy jest gotowe
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
+    
+    // Informuj o naprawie systemu aktualizacji (tylko przy pierwszym uruchomieniu po naprawie)
+    const updateFixed = store.get('updateFixed', false);
+    if (!updateFixed) {
+      setTimeout(() => {
+        dialog.showMessageBox(mainWindow, {
+          type: 'info',
+          title: 'System aktualizacji naprawiony',
+          message: 'System aktualizacji został naprawiony. Teraz możesz sprawdzać, pobierać i instalować aktualizacje bezpośrednio z aplikacji.',
+          buttons: ['OK']
+        });
+        store.set('updateFixed', true);
+      }, 2000);
+    }
   });
   
   // Dodaj menu kontekstowe dla zarządzania oknem (dostępne po kliknięciu prawym przyciskiem)
@@ -277,7 +291,24 @@ autoUpdater.on('update-not-available', () => {
 
 autoUpdater.on('error', (err) => {
   if (mainWindow) {
-    mainWindow.webContents.send('update-error', err.message);
+    console.error('Błąd aktualizacji:', err);
+    
+    // Sprawdź czy błąd zawiera 404, co może oznaczać problem z URL repozytorium
+    if (err.message && err.message.includes('404')) {
+      mainWindow.webContents.send('update-error', 'Nie można znaleźć źródła aktualizacji. Skontaktuj się z autorem aplikacji.');
+      
+      // Wyświetl alert tylko jeśli użytkownik ręcznie sprawdził aktualizacje
+      dialog.showMessageBox(mainWindow, {
+        type: 'warning',
+        title: 'Problem z aktualizacją',
+        message: 'Nie można pobrać informacji o aktualizacjach',
+        detail: 'Sprawdź swoje połączenie internetowe lub skontaktuj się z autorem aplikacji.',
+        buttons: ['OK']
+      });
+    } else {
+      // Dla innych błędów wyślij oryginalny komunikat
+      mainWindow.webContents.send('update-error', err.message);
+    }
   }
 });
 
