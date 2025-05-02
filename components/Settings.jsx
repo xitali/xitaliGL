@@ -785,7 +785,7 @@ const Settings = ({ settings, onSettingsChange, platformPaths, updatePlatformPat
             </div>
             
             <h2 className="text-xl font-bold text-center text-white mb-2">xitali Game Launcher</h2>
-            <p className="text-gray-300 text-center mb-4">Wersja: 1.0.4</p>
+            <p className="text-gray-300 text-center mb-4">Wersja: 1.0.5</p>
             
             <p className="text-gray-300 text-center mb-4">
               Launcher do zarządzania biblioteką gier z różnych platform.

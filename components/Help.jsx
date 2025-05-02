@@ -26,7 +26,7 @@ const Help = () => {
             GOG i Xbox, a także umożliwia dodawanie własnych gier.
           </p>
           <p className="mb-3 text-gray-300">
-            Wersja aplikacji: 1.0.4
+            Wersja aplikacji: 1.0.5
           </p>
         </section>
         

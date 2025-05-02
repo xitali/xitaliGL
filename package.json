@@ -1,6 +1,6 @@
 {
   "name": "xitali-game-launcher",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Launcher gier pozwalający na zarządzanie biblioteką gier z różnych platform",
   "main": "main.js",
   "scripts": {
