@@ -42,9 +42,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // System aktualizacji
   checkForUpdates: () => ipcRenderer.send('check-for-updates'),
+  downloadUpdate: () => ipcRenderer.invoke('downloadUpdate'),
+  installUpdate: () => ipcRenderer.invoke('installUpdate'),
   onUpdateStatus: (callback) => ipcRenderer.on('update-status', (_, status) => callback(status)),
   onUpdateError: (callback) => ipcRenderer.on('update-error', (_, error) => callback(error)),
   onUpdateProgress: (callback) => ipcRenderer.on('update-progress', (_, progress) => callback(progress)),
+  onUpdateAvailable: (callback) => ipcRenderer.on('update-available', (_, info) => callback(info)),
   
   // Obsługa zdarzeń dla ustawień wymagających restartu
   onSettingRequiresRestart: (callback) => {

@@ -140,6 +140,11 @@ const Settings = ({ settings, onSettingsChange, platformPaths, updatePlatformPat
   
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState({ text: '', type: '' });
+  
+  // Nowe stany do obsługi aktualizacji
+  const [updateInfo, setUpdateInfo] = useState(null);
+  const [updateStatus, setUpdateStatus] = useState(null); // 'checking', 'downloading', 'downloaded'
+  const [updateProgress, setUpdateProgress] = useState(0);
 
   // Etykiety platform
   const platformLabels = {
@@ -187,6 +192,72 @@ const Settings = ({ settings, onSettingsChange, platformPaths, updatePlatformPat
       window.removeEventListener('setting-requires-restart', handleSettingRequiresRestart);
     };
   }, []);
+
+  // Dodajemy obsługę zdarzeń związanych z aktualizacjami
+  useEffect(() => {
+    if (window.electronAPI) {
+      // Nasłuchiwanie na dostępne aktualizacje
+      const removeUpdateAvailable = window.electronAPI.onUpdateAvailable((info) => {
+        setUpdateInfo(info);
+        setUpdateStatus('available');
+      });
+      
+      // Nasłuchiwanie na status aktualizacji
+      const removeUpdateStatus = window.electronAPI.onUpdateStatus((status) => {
+        setUpdateStatus(status);
+      });
+      
+      // Nasłuchiwanie na błędy aktualizacji
+      const removeUpdateError = window.electronAPI.onUpdateError((error) => {
+        showMessage(`Błąd aktualizacji: ${error}`, 'error', 5000);
+        setUpdateStatus('error');
+      });
+      
+      // Nasłuchiwanie na postęp pobierania
+      const removeUpdateProgress = window.electronAPI.onUpdateProgress((progressObj) => {
+        setUpdateProgress(progressObj.percent || 0);
+      });
+      
+      return () => {
+        // Sprzątanie nasłuchiwaczy przy odmontowywaniu komponentu
+        removeUpdateAvailable && removeUpdateAvailable();
+        removeUpdateStatus && removeUpdateStatus();
+        removeUpdateError && removeUpdateError();
+        removeUpdateProgress && removeUpdateProgress();
+      };
+    }
+  }, []);
+
+  // Funkcja do pobierania aktualizacji
+  const handleDownloadUpdate = async () => {
+    setUpdateStatus('downloading');
+    try {
+      const success = await window.electronAPI.downloadUpdate();
+      if (!success) {
+        showMessage('Nie udało się pobrać aktualizacji', 'error');
+        setUpdateStatus('error');
+      }
+    } catch (error) {
+      showMessage(`Błąd pobierania: ${error.message}`, 'error');
+      setUpdateStatus('error');
+    }
+  };
+  
+  // Funkcja do instalowania pobranej aktualizacji
+  const handleInstallUpdate = async () => {
+    try {
+      await window.electronAPI.installUpdate();
+    } catch (error) {
+      showMessage(`Błąd instalacji: ${error.message}`, 'error');
+    }
+  };
+  
+  // Funkcja do ręcznego sprawdzania aktualizacji
+  const handleCheckForUpdates = () => {
+    setUpdateStatus('checking');
+    window.electronAPI?.checkForUpdates();
+    showMessage('Sprawdzanie aktualizacji...', 'success', 3000);
+  };
 
   // Funkcja do wyświetlania komunikatów
   const showMessage = (text, type, duration = 3000) => {
@@ -503,6 +574,15 @@ const Settings = ({ settings, onSettingsChange, platformPaths, updatePlatformPat
             />
           </SettingsOption>
 
+          <div className="flex justify-end pt-2 mb-4">
+            <button 
+              onClick={handleCheckForUpdates}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-500 text-sm transition-colors"
+            >
+              Sprawdź aktualizacje teraz
+            </button>
+          </div>
+
           <SettingsOption label="Pokaż liczbę gier">
             <ToggleSwitch 
               checked={localSettings.showGamesCount === true} 
@@ -637,6 +717,77 @@ const Settings = ({ settings, onSettingsChange, platformPaths, updatePlatformPat
             </p>
           </div>
         </SettingsPanel>
+        
+        {/* Modal aktualizacji - wyświetlany gdy updateStatus jest ustawiony */}
+        {updateStatus === 'available' && updateInfo && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+            <div className="bg-zinc-900 p-6 rounded-lg shadow-xl max-w-md w-full">
+              <h3 className="text-xl font-bold text-white mb-2">Dostępna aktualizacja</h3>
+              <p className="text-gray-300 mb-4">
+                Dostępna jest nowa wersja: <span className="font-semibold">{updateInfo.version}</span>
+              </p>
+              
+              <div className="flex justify-end space-x-3 mt-6">
+                <button 
+                  onClick={() => setUpdateStatus(null)}
+                  className="px-4 py-2 bg-zinc-700 text-gray-200 rounded-md hover:bg-zinc-600 transition-colors"
+                >
+                  Anuluj
+                </button>
+                <button 
+                  onClick={handleDownloadUpdate}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-500 transition-colors"
+                >
+                  Pobierz i zainstaluj
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {updateStatus === 'downloading' && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+            <div className="bg-zinc-900 p-6 rounded-lg shadow-xl max-w-md w-full">
+              <h3 className="text-xl font-bold text-white mb-2">Pobieranie aktualizacji</h3>
+              <p className="text-gray-300 mb-4">Proszę czekać, pobieranie w toku...</p>
+              
+              <div className="w-full bg-zinc-800 rounded-full h-2.5 mb-4">
+                <div 
+                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                  style={{ width: `${updateProgress}%` }}
+                ></div>
+              </div>
+              <p className="text-right text-gray-400 text-sm">{Math.round(updateProgress)}%</p>
+            </div>
+          </div>
+        )}
+        
+        {updateStatus === 'downloaded' && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+            <div className="bg-zinc-900 p-6 rounded-lg shadow-xl max-w-md w-full">
+              <h3 className="text-xl font-bold text-white mb-2">Aktualizacja gotowa</h3>
+              <p className="text-gray-300 mb-4">
+                Aktualizacja została pobrana i jest gotowa do instalacji. 
+                Aplikacja zostanie uruchomiona ponownie po instalacji.
+              </p>
+              
+              <div className="flex justify-end space-x-3 mt-6">
+                <button 
+                  onClick={() => setUpdateStatus(null)}
+                  className="px-4 py-2 bg-zinc-700 text-gray-200 rounded-md hover:bg-zinc-600 transition-colors"
+                >
+                  Później
+                </button>
+                <button 
+                  onClick={handleInstallUpdate}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-500 transition-colors"
+                >
+                  Zainstaluj teraz
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

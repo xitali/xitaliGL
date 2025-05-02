@@ -247,19 +247,27 @@ function checkForUpdates() {
 // Obsługa wydarzeń aktualizacji
 autoUpdater.on('update-available', (info) => {
   if (mainWindow) {
-    dialog.showMessageBox(mainWindow, {
-      type: 'info',
-      title: 'Dostępna aktualizacja',
-      message: `Dostępna jest nowa wersja: ${info.version}`,
-      detail: 'Czy chcesz pobrać i zainstalować aktualizację?',
-      buttons: ['Tak', 'Nie'],
-      defaultId: 0
-    }).then((result) => {
-      if (result.response === 0) {
-        autoUpdater.downloadUpdate();
-        mainWindow.webContents.send('update-status', 'downloading');
-      }
-    });
+    // Wysyłamy informację o dostępnej aktualizacji do renderer procesu
+    mainWindow.webContents.send('update-available', info);
+    
+    // Sprawdzamy, czy to było automatyczne sprawdzanie czy manualne
+    const settings = store.get('settings', {});
+    if (settings.checkUpdatesOnStartup) {
+      // Automatyczne sprawdzanie - pokazujemy dialog
+      dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: 'Dostępna aktualizacja',
+        message: `Dostępna jest nowa wersja: ${info.version}`,
+        detail: 'Czy chcesz pobrać i zainstalować aktualizację?',
+        buttons: ['Tak', 'Nie'],
+        defaultId: 0
+      }).then((result) => {
+        if (result.response === 0) {
+          autoUpdater.downloadUpdate();
+          mainWindow.webContents.send('update-status', 'downloading');
+        }
+      });
+    }
   }
 });
 
@@ -281,6 +289,9 @@ autoUpdater.on('download-progress', (progressObj) => {
 
 autoUpdater.on('update-downloaded', () => {
   if (mainWindow) {
+    // Wysyłamy informację o pobranej aktualizacji do renderer procesu
+    mainWindow.webContents.send('update-status', 'downloaded');
+    
     dialog.showMessageBox(mainWindow, {
       type: 'info',
       title: 'Aktualizacja gotowa',
@@ -295,9 +306,31 @@ autoUpdater.on('update-downloaded', () => {
   }
 });
 
-// Dodajemy obsługę IPC dla ręcznego sprawdzania aktualizacji
+// Obsługa IPC dla ręcznego sprawdzania aktualizacji
 ipcMain.on('check-for-updates', () => {
   checkForUpdates();
+});
+
+// Nowa funkcja do ręcznego pobierania i instalowania aktualizacji
+ipcMain.handle('downloadUpdate', async () => {
+  try {
+    await autoUpdater.downloadUpdate();
+    return true;
+  } catch (error) {
+    console.error('Błąd podczas pobierania aktualizacji:', error);
+    return false;
+  }
+});
+
+// Nowa funkcja do instalowania pobranych aktualizacji
+ipcMain.handle('installUpdate', async () => {
+  try {
+    autoUpdater.quitAndInstall(false, true);
+    return true;
+  } catch (error) {
+    console.error('Błąd podczas instalowania aktualizacji:', error);
+    return false;
+  }
 });
 
 app.whenReady().then(() => {
