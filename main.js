@@ -23,6 +23,10 @@ let tray = null;
 // Konfiguracja autoUpdatera
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
+// Dodajemy logowanie dla debugowania
+autoUpdater.logger = require('electron-log');
+autoUpdater.logger.transports.file.level = 'debug';
+console.log('Auto-updater skonfigurowany. Logi będą zapisywane w:', autoUpdater.logger.transports.file.getFile().path);
 
 // Funkcja do tworzenia ikony w zasobniku systemowym
 function createTray() {
@@ -255,11 +259,24 @@ function createWindow() {
 
 // Funkcja sprawdzająca aktualizacje
 function checkForUpdates() {
+  console.log('Rozpoczynam sprawdzanie aktualizacji...');
+  console.log('Aktualna wersja aplikacji:', app.getVersion());
+  console.log('URL repozytorium:', autoUpdater.getFeedURL());
+  
   autoUpdater.checkForUpdates();
 }
 
 // Obsługa wydarzeń aktualizacji
+autoUpdater.on('checking-for-update', () => {
+  console.log('Sprawdzanie dostępności aktualizacji...');
+  if (mainWindow) {
+    mainWindow.webContents.send('update-status', 'checking');
+  }
+});
+
 autoUpdater.on('update-available', (info) => {
+  console.log('Dostępna aktualizacja:', info);
+  
   if (mainWindow) {
     // Wysyłamy informację o dostępnej aktualizacji do renderer procesu
     mainWindow.webContents.send('update-available', info);
@@ -285,16 +302,20 @@ autoUpdater.on('update-available', (info) => {
   }
 });
 
-autoUpdater.on('update-not-available', () => {
-  // Brak dostępnych aktualizacji
+autoUpdater.on('update-not-available', (info) => {
+  console.log('Brak dostępnych aktualizacji:', info);
+  if (mainWindow) {
+    mainWindow.webContents.send('update-status', 'not-available');
+  }
 });
 
 autoUpdater.on('error', (err) => {
+  console.error('Błąd aktualizacji:', err);
+  
   if (mainWindow) {
-    console.error('Błąd aktualizacji:', err);
-    
     // Sprawdź czy błąd zawiera 404, co może oznaczać problem z URL repozytorium
     if (err.message && err.message.includes('404')) {
+      console.error('Błąd 404 - nie można znaleźć źródła aktualizacji. URL:', autoUpdater.getFeedURL());
       mainWindow.webContents.send('update-error', 'Nie można znaleźć źródła aktualizacji. Skontaktuj się z autorem aplikacji.');
       
       // Wyświetl alert tylko jeśli użytkownik ręcznie sprawdził aktualizacje

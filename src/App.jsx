@@ -281,6 +281,10 @@ function App() {
     // Jeśli zmieniliśmy widok na 'games', załaduj gry dla aktualnej platformy
     if (activeView === 'games') {
       loadGamesForPlatform(activePlatform);
+    } else {
+      // Jeśli zmieniliśmy widok na coś innego niż 'games' (np. 'help' lub 'settings'),
+      // upewniamy się, że ekran ładowania jest wyłączony
+      setLoading(false);
     }
   }, [activeView]);
   
@@ -319,9 +323,11 @@ function App() {
     switch(action) {
       case 'settings':
         setActiveView('settings');
+        setLoading(false); // Upewniamy się, że loading jest wyłączony
         break;
       case 'help':
         setActiveView('help');
+        setLoading(false); // Upewniamy się, że loading jest wyłączony
         break;
       case 'games':
         setActiveView('games');
