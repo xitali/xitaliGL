@@ -1,5 +1,16 @@
 # Dziennik zmian
 
+## [1.0.6] - 2024-07-18
+
+### Naprawiono
+- Poprawiono system aktualizacji aplikacji z GitHub
+- Dodano lepsze logowanie do debugowania procesu aktualizacji
+- Zaktualizowano konfigurację publikowania do repozytorium GitHub
+
+### Zmieniono
+- Dodano obsługę tokenów GitHub z uprawnieniami Fine-grained
+- Ulepszono mechanizm sprawdzania dostępności nowych wersji
+
 ## [1.0.2] - 2024-07-11
 
 ### Dodano

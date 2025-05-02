@@ -1,6 +1,6 @@
 {
   "name": "xitali-game-launcher",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Launcher gier pozwalający na zarządzanie biblioteką gier z różnych platform",
   "main": "main.js",
   "scripts": {
@@ -73,7 +73,9 @@
       {
         "provider": "github",
         "owner": "xitali",
-        "repo": "xitaliGL"
+        "repo": "xitaliGL",
+        "private": true,
+        "releaseType": "release"
       }
     ],
     "extraResources": [

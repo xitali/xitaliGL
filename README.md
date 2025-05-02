@@ -6,7 +6,7 @@ Nowoczesny launcher gier dla systemu Windows, pozwalający zarządzać bibliotek
 
 ## Najnowsza wersja
 
-**Wersja 1.0.2** (11.07.2024) - Naprawiono funkcjonalność zapamiętywania pozycji okna oraz uruchamiania przy starcie systemu. Szczegóły w [CHANGELOG.md](CHANGELOG.md).
+**Wersja 1.0.6** (18.07.2024) - Naprawiono system aktualizacji aplikacji z GitHub. Dodano obsługę tokenów GitHub z uprawnieniami Fine-grained. Szczegóły w [CHANGELOG.md](CHANGELOG.md).
 
 ## Funkcje
 
@@ -19,6 +19,7 @@ Nowoczesny launcher gier dla systemu Windows, pozwalający zarządzać bibliotek
   - Origin/EA
   - Battle.net
   - Ubisoft Connect
+- **Automatyczne aktualizacje:** Sprawdzanie, pobieranie i instalowanie nowych wersji aplikacji
 - **Automatyczny scraping:** Pobieranie okładek gier i ikon platform z SteamGridDB
 - **Nowoczesny UI/UX:** 
   - Zwijany/rozwijany pasek boczny
@@ -83,6 +84,14 @@ npm run electron:build
 
 #### Publikowanie nowej wersji
 ```bash
+# Dla deweloperów: ustaw token GitHub jako zmienną środowiskową
+# W PowerShell:
+$env:GH_TOKEN="twój_token_github"
+
+# W cmd:
+set GH_TOKEN=twój_token_github
+
+# Następnie uruchom publikowanie
 npm run publish
 ```
 
@@ -131,6 +140,11 @@ Pobrane zasoby są przechowywane lokalnie w folderach `assets/covers` i `assets/
 - Upewnij się, że odpowiednie platformy są zainstalowane i działają
 - Sprawdź, czy ścieżki do gier są prawidłowe
 - Niektóre gry wymagają uruchomienia poprzez swój natywny launcher
+
+### Problemy z aktualizacjami
+- Upewnij się, że masz połączenie z internetem
+- Sprawdź, czy token GitHub jest poprawnie skonfigurowany (dla developerów)
+- Jeśli aktualizacja nie działa automatycznie, możesz ręcznie pobrać najnowszą wersję z [sekcji Releases](https://github.com/xitali/xitaliGL/releases)
 
 ## Licencja
 

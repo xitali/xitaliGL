@@ -28,6 +28,13 @@ autoUpdater.logger = require('electron-log');
 autoUpdater.logger.transports.file.level = 'debug';
 console.log('Auto-updater skonfigurowany. Logi będą zapisywane w:', autoUpdater.logger.transports.file.getFile().path);
 
+// Dodajemy ustawienie tokenu GitHub z zmiennej środowiskowej
+if (process.env.GH_TOKEN) {
+  console.log('Token GitHub został ustawiony z zmiennej środowiskowej');
+} else {
+  console.log('Brak tokenu GitHub w zmiennych środowiskowych');
+}
+
 // Funkcja do tworzenia ikony w zasobniku systemowym
 function createTray() {
   const settings = store.get('settings', {});
@@ -261,9 +268,18 @@ function createWindow() {
 function checkForUpdates() {
   console.log('Rozpoczynam sprawdzanie aktualizacji...');
   console.log('Aktualna wersja aplikacji:', app.getVersion());
-  console.log('URL repozytorium:', autoUpdater.getFeedURL());
-  
-  autoUpdater.checkForUpdates();
+  try {
+    console.log('URL repozytorium:', autoUpdater.getFeedURL());
+    console.log('GitHub token obecny:', process.env.GH_TOKEN ? 'Tak' : 'Nie');
+    console.log('Konfiguracja publikacji:', JSON.stringify(autoUpdater.options.configuration.publish, null, 2));
+    
+    autoUpdater.checkForUpdates();
+  } catch (error) {
+    console.error('Błąd podczas sprawdzania aktualizacji:', error);
+    if (mainWindow) {
+      mainWindow.webContents.send('update-error', 'Błąd podczas sprawdzania aktualizacji: ' + error.message);
+    }
+  }
 }
 
 // Obsługa wydarzeń aktualizacji
