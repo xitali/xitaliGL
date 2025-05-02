@@ -145,6 +145,12 @@ const Settings = ({ settings, onSettingsChange, platformPaths, updatePlatformPat
   const [updateInfo, setUpdateInfo] = useState(null);
   const [updateStatus, setUpdateStatus] = useState(null); // 'checking', 'downloading', 'downloaded'
   const [updateProgress, setUpdateProgress] = useState(0);
+  
+  // Stan do śledzenia postępu skanowania biblioteki
+  const [scanningStatus, setScanningStatus] = useState({
+    isScanning: false,
+    results: null
+  });
 
   // Etykiety platform
   const platformLabels = {
@@ -388,6 +394,51 @@ const Settings = ({ settings, onSettingsChange, platformPaths, updatePlatformPat
     }
   };
 
+  // Funkcja do skanowania biblioteki
+  const handleScanLibrary = async () => {
+    try {
+      setScanningStatus({ isScanning: true, results: null });
+      showMessage('Rozpoczęto skanowanie biblioteki...', 'success');
+      
+      // Wywołujemy funkcję skanowania i czekamy na wyniki
+      const results = await window.electronAPI.findInstalledGames('all', true);
+      
+      // Zliczmy liczbę znalezionych gier
+      let totalGames = 0;
+      let platformsWithGames = 0;
+      
+      if (results && typeof results === 'object') {
+        Object.entries(results).forEach(([platform, games]) => {
+          if (Array.isArray(games) && games.length > 0) {
+            totalGames += games.length;
+            platformsWithGames++;
+          }
+        });
+      }
+      
+      // Ustawiamy wyniki skanowania
+      setScanningStatus({ 
+        isScanning: false, 
+        results: {
+          totalGames,
+          platformsWithGames,
+          details: results
+        }
+      });
+      
+      // Wyświetlamy komunikat o wynikach
+      if (totalGames > 0) {
+        showMessage(`Znaleziono ${totalGames} gier na ${platformsWithGames} platformach.`, 'success', 5000);
+      } else {
+        showMessage('Nie znaleziono żadnych gier. Sprawdź konfigurację ścieżek do platform.', 'error', 5000);
+      }
+    } catch (error) {
+      console.error('Błąd podczas skanowania biblioteki:', error);
+      setScanningStatus({ isScanning: false, results: null });
+      showMessage('Wystąpił błąd podczas skanowania biblioteki.', 'error', 5000);
+    }
+  };
+
   return (
     <div className="w-full h-full overflow-y-auto bg-transparent p-0">
       <div className="w-full h-full bg-transparent rounded-none p-6 shadow-lg border-none">
@@ -544,12 +595,55 @@ const Settings = ({ settings, onSettingsChange, platformPaths, updatePlatformPat
           
           <div className="flex justify-end pt-2">
             <button 
-              onClick={() => window.electronAPI?.findInstalledGames('all', true)}
+              onClick={handleScanLibrary}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-500 text-sm transition-colors"
             >
               Skanuj bibliotekę teraz
             </button>
           </div>
+          
+          {/* Wyniki skanowania */}
+          {scanningStatus.isScanning && (
+            <div className="mt-4 p-3 rounded-md bg-zinc-800 text-gray-200">
+              <div className="flex items-center justify-center">
+                <div className="w-5 h-5 border-2 border-t-blue-500 border-r-blue-500 border-b-zinc-800 border-l-zinc-800 rounded-full animate-spin mr-2"></div>
+                <span>Skanowanie bibliotek gier...</span>
+              </div>
+            </div>
+          )}
+          
+          {!scanningStatus.isScanning && scanningStatus.results && (
+            <div className="mt-4 p-3 rounded-md bg-zinc-800 text-gray-200">
+              <h4 className="font-medium mb-2">Wyniki skanowania:</h4>
+              
+              {scanningStatus.results.totalGames > 0 ? (
+                <>
+                  <p className="mb-2">
+                    Znaleziono <span className="font-semibold text-white">{scanningStatus.results.totalGames}</span> gier 
+                    na <span className="font-semibold text-white">{scanningStatus.results.platformsWithGames}</span> platformach.
+                  </p>
+                  
+                  <div className="mt-3 text-sm">
+                    {Object.entries(scanningStatus.results.details).map(([platform, games]) => {
+                      if (Array.isArray(games) && games.length > 0) {
+                        return (
+                          <div key={platform} className="mb-2">
+                            <span className="text-gray-300">{platformLabels[platform] || platform}: </span>
+                            <span className="text-white font-medium">{games.length} gier</span>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+                </>
+              ) : (
+                <p className="text-gray-300">
+                  Nie znaleziono żadnych gier. Sprawdź konfigurację ścieżek do platform w sekcji "Ścieżki Platform".
+                </p>
+              )}
+            </div>
+          )}
         </SettingsPanel>
 
         {/* Panel Powiadomień */}
@@ -691,7 +785,7 @@ const Settings = ({ settings, onSettingsChange, platformPaths, updatePlatformPat
             </div>
             
             <h2 className="text-xl font-bold text-center text-white mb-2">xitali Game Launcher</h2>
-            <p className="text-gray-300 text-center mb-4">Wersja: 1.0.2</p>
+            <p className="text-gray-300 text-center mb-4">Wersja: 1.0.4</p>
             
             <p className="text-gray-300 text-center mb-4">
               Launcher do zarządzania biblioteką gier z różnych platform.

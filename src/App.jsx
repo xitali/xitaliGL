@@ -155,12 +155,24 @@ function App() {
   const loadGamesForPlatform = (platform) => {
     setLoading(true);
     try {
+      console.log(`Ładowanie gier dla platformy: ${platform}`);
+      
+      // Sprawdzamy, czy cache istnieje
+      if (!allGamesCache) {
+        console.warn('Cache gier nie istnieje, ładuję wszystkie gry...');
+        loadAllGames();
+        return;
+      }
+      
       // Jeśli gry zostały już załadowane, używamy cache
-      if (gamesLoaded && allGamesCache[platform]) {
+      if (gamesLoaded && platform in allGamesCache) {
         console.log(`Używam załadowanych gier dla platformy ${platform} (${allGamesCache[platform].length} gier)`);
         
+        // Upewnij się, że allGamesCache[platform] to tablica
+        const platformGames = Array.isArray(allGamesCache[platform]) ? allGamesCache[platform] : [];
+        
         // Sortowanie gier zgodnie z ustawieniami
-        const sortedGames = sortGames(allGamesCache[platform], appSettings.sortOrder);
+        const sortedGames = sortGames(platformGames, appSettings.sortOrder);
         
         setGames(sortedGames);
         setFilteredGames(sortedGames);
@@ -176,14 +188,40 @@ function App() {
       }
       
       // Jeśli z jakiegoś powodu nie ma gier dla platformy w cache, a cache jest już załadowany
-      console.warn(`Brak cache dla platformy ${platform}, mimo załadowanych gier`);
-      setGames([]);
-      setFilteredGames([]);
+      console.warn(`Brak cache dla platformy ${platform}, mimo załadowanych gier. Próbuję załadować ponownie...`);
+      
+      // Próbujemy załadować platformę ponownie
+      if (window.electronAPI) {
+        window.electronAPI.findInstalledGames(platform)
+          .then((games) => {
+            const sortedGames = sortGames(games || [], appSettings.sortOrder);
+            setGames(sortedGames);
+            setFilteredGames(sortedGames);
+            
+            // Aktualizujemy cache
+            setAllGamesCache(prev => ({
+              ...prev,
+              [platform]: games || []
+            }));
+          })
+          .catch((error) => {
+            console.error(`Błąd podczas wczytywania gier dla platformy ${platform}:`, error);
+            setGames([]);
+            setFilteredGames([]);
+          })
+          .finally(() => {
+            setLoading(false);
+          });
+      } else {
+        // Jeśli nie ma API, po prostu wyświetlamy pustą listę
+        setGames([]);
+        setFilteredGames([]);
+        setLoading(false);
+      }
     } catch (error) {
       console.error('Błąd podczas wczytywania gier:', error);
       setGames([]);
       setFilteredGames([]);
-    } finally {
       setLoading(false);
     }
   };
@@ -226,11 +264,25 @@ function App() {
 
   // Przy zmianie platformy, załaduj odpowiednie gry z cache
   useEffect(() => {
-    // Przywróć widok gier jeśli zmieniono platformę
-    setActiveView('games');
+    // Przywróć widok gier jeśli zmieniono platformę i aktualnie nie jesteśmy w widoku ustawień ani pomocy
+    if (activeView !== 'settings' && activeView !== 'help') {
+      setActiveView('games');
+    }
     setSearchQuery(''); // Resetuj wyszukiwanie przy zmianie platformy
-    loadGamesForPlatform(activePlatform);
+    
+    // Ładujemy gry tylko jeśli jesteśmy w widoku gier
+    if (activeView === 'games') {
+      loadGamesForPlatform(activePlatform);
+    }
   }, [activePlatform, gamesLoaded]);
+  
+  // Dodatkowy efekt do obsługi zmiany aktywnego widoku
+  useEffect(() => {
+    // Jeśli zmieniliśmy widok na 'games', załaduj gry dla aktualnej platformy
+    if (activeView === 'games') {
+      loadGamesForPlatform(activePlatform);
+    }
+  }, [activeView]);
   
   // Przy zmianie ustawień sortowania, posortuj gry
   useEffect(() => {
@@ -258,6 +310,12 @@ function App() {
 
   // Obsługa akcji z sidebara
   const handleSidebarAction = (action) => {
+    console.log(`Zmiana aktywnego widoku na: ${action}`);
+    if (action === activeView) {
+      // Jeśli kliknięto w już aktywny widok, nie rób nic
+      return;
+    }
+    
     switch(action) {
       case 'settings':
         setActiveView('settings');
@@ -267,6 +325,8 @@ function App() {
         break;
       case 'games':
         setActiveView('games');
+        // Odśwież gry przy przełączeniu z powrotem do widoku gier
+        loadGamesForPlatform(activePlatform);
         break;
       default:
         break;
@@ -407,35 +467,6 @@ function App() {
     document.body.setAttribute('data-display-mode', settings.displayMode);
   };
 
-  // Renderowanie aktualnego widoku
-  const renderActiveView = () => {
-    switch (activeView) {
-      case 'games':
-        return (
-          <GameGrid 
-            games={filteredGames} 
-            currentPlatform={activePlatform} 
-            displayMode={appSettings.displayMode}
-            gridSize={appSettings.gridSize}
-          />
-        );
-      case 'settings':
-        // Nie renderujemy ustawień tutaj, są renderowane bezpośrednio w warunku
-        return null;
-      case 'help':
-        return <Help />;
-      default:
-        return (
-          <GameGrid 
-            games={filteredGames} 
-            currentPlatform={activePlatform} 
-            displayMode={appSettings.displayMode}
-            gridSize={appSettings.gridSize}
-          />
-        );
-    }
-  };
-
   return (
     <div className="flex h-screen overflow-hidden bg-transparent">
       {/* Niewidoczny pasek tytułowy do przeciągania okna */}
@@ -453,7 +484,7 @@ function App() {
       
       <main className="flex-1 h-full flex flex-col w-full" style={{ width: 'calc(100% - var(--sidebar-width, 220px))' }}>
         <div className="flex-1 overflow-auto w-full h-full pb-10" style={{ marginBottom: '40px' }}>
-          {activeView === 'settings' ? (
+          {activeView === 'settings' && (
             <div className="w-full h-full">
               <Settings 
                 settings={appSettings} 
@@ -462,8 +493,21 @@ function App() {
                 updatePlatformPath={window.electronAPI?.updatePlatformPath}
               />
             </div>
-          ) : (
-            renderActiveView()
+          )}
+          
+          {activeView === 'help' && (
+            <div className="w-full h-full">
+              <Help />
+            </div>
+          )}
+          
+          {activeView === 'games' && (
+            <GameGrid 
+              games={filteredGames} 
+              currentPlatform={activePlatform} 
+              displayMode={appSettings.displayMode}
+              gridSize={appSettings.gridSize}
+            />
           )}
         </div>
         
